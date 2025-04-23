@@ -1,0 +1,58 @@
+import images from "./images";
+
+export const fullData = [
+  {
+    id: '1',
+    type: 'Nhà phố',
+    title: 'Nhà phố quận 1',
+    price: '4 tỷ · 60 m²',
+    location: 'Quận 1, TP.HCM',
+    image: images.homeBig,
+    contact: '0901234***',
+  },
+  {
+    id: '2',
+    type: 'Căn hộ',
+    title: 'Căn hộ Vinhomes Central Park',
+    price: '3 tỷ · 75 m²',
+    location: 'Bình Thạnh, TP.HCM',
+    image: images.homeBig,
+    contact: '0912345***',
+  },
+  {
+    id: '3',
+    type: 'Biệt thự',
+    title: 'Biệt thự Tây Hồ view hồ',
+    price: '12 tỷ · 180 m²',
+    location: 'Tây Hồ, Hà Nội',
+    image: images.homeBig,
+    contact: '0987654***',
+  },
+  {
+    id: '4',
+    type: 'Nhà phố',
+    title: 'Nhà phố Thủ Đức giá tốt',
+    price: '2.5 tỷ · 50 m²',
+    location: 'TP.Thủ Đức, TP.HCM',
+    image: images.homeBig,
+    contact: '0909999***',
+  },
+  {
+    id: '5',
+    type: 'Biệt thự',
+    title: 'Nhà phố Thủ Đức giá tốt',
+    price: '2.5 tỷ · 50 m²',
+    location: 'TP.Thủ Đức, TP.HCM',
+    image: images.homeBig,
+    contact: '0909999***',
+  },
+  {
+    id: '6',
+    type: 'Nhà phố',
+    title: 'Nhà phố Thủ Đức giá tốt',
+    price: '1.5 tỷ · 50 m²',
+    location: 'TP.Thủ Đức, TP.HCM',
+    image: images.homeBig,
+    contact: '0909999***',
+  },
+];
