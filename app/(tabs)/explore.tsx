@@ -4,7 +4,7 @@ import Index from "../explore/index";
 
 export default function TabTwoScreen() {
   return (
-    <SafeAreaView >
+    <SafeAreaView className='flex-1 bg-gray-100'>
       <Index />
     </SafeAreaView>
   )

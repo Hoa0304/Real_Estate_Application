@@ -98,7 +98,7 @@ export default function ChatList() {
   return (
     <View className="flex-1 bg-white p-4">
       <View className="flex-row items-center mb-3">
-        <TextInput
+        <TextInput  placeholderTextColor="#666666"
           placeholder="Tìm kiếm tin nhắn..."
           value={searchText}
           onChangeText={setSearchText}

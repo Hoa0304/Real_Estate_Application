@@ -18,7 +18,7 @@ export const useWarmUpBrowser = () => {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const LoginScreen = () => {
+const RegisterScreen = () => {
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
   const { user } = useUser();
@@ -65,10 +65,10 @@ const LoginScreen = () => {
         </View>
 
         <View className="bg-white p-5 rounded-lg flex-1 shadow-md">
-          <Text className="text-2xl font-bold mb-2">Đăng nhập</Text>
+          <Text className="text-2xl font-bold mb-2">Đăng ký</Text>
           {/* <Text className="text-base mb-4">Đăng nhập tài khoản của bạn</Text>  */}
 
-          <Text className="text-base mt-2">Số điện thoại đăng nhập</Text>
+          <Text className="text-base mt-2">Số điện thoại đăng kí</Text>
           <TextInput
             className="border border-gray-300 rounded-md p-2 mt-1 mb-2"
             value={phoneNumber}
@@ -97,7 +97,7 @@ const LoginScreen = () => {
 
           <View className="flex-col gap-2">
             <TouchableOpacity onPress={handleLogin} className=" flex-row justify-center items-end bg-red-500 py-2 rounded-md ">
-              <Text className='font-medium text-[16px] text-white'>ĐĂNG NHẬP</Text>
+              <Text className='font-medium text-[16px] text-white'>ĐĂNG KÝ</Text>
             </TouchableOpacity>
 
             <View className="flex-row items-center my-2">
@@ -113,9 +113,9 @@ const LoginScreen = () => {
           </View>
 
           <TouchableOpacity 
-            onPress={() => router.push('/login/register')} className="flex-row justify-center mt-5">
-            <Text className="text-base">Bạn chưa có tài khoản? </Text>
-            <Text className="text-base text-blue-500">Đăng ký</Text>
+            onPress={() => router.push('/login/login')} className="flex-row justify-center mt-5">
+            <Text className="text-base">Bạn đã có tài khoản? </Text>
+            <Text className="text-base text-blue-500">Đăng nhập</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -125,4 +125,4 @@ const LoginScreen = () => {
 
 
 
-export default LoginScreen;
+export default RegisterScreen;

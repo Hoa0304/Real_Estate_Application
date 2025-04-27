@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChatDetail() {
   const { user } = useLocalSearchParams<{ user: string }>();
@@ -40,15 +41,20 @@ export default function ChatDetail() {
 
   const handleSend = () => {
     if (!inputText.trim()) return;
+
+    const currentTime = new Date();
+    const formattedTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
     setMessages((prev) => [
       ...prev,
-      { id: Date.now(), fromMe: true, text: inputText, time: "Now" },
+      { id: Date.now(), fromMe: true, text: inputText, time: formattedTime },
     ]);
     setInputText("");
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
   return (
+  <SafeAreaView className="flex-1 bg-gray-100">
     <KeyboardAvoidingView
       className="flex-1 bg-white"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -90,9 +96,10 @@ export default function ChatDetail() {
             ))}
           </ScrollView>
 
-          <View className="flex-row items-center px-4 py-2 border-t border-gray-200 bg-white mb-7">
+          <View className="flex-row items-center px-4 py-2 border-t border-gray-200 bg-white">
             <TextInput
-              placeholder="Type here..."
+              placeholderTextColor="#666666"
+              placeholder="Nhập tin nhắn..."
               className="flex-1 border border-gray-300 rounded-full px-4 py-2 mr-2 text-sm"
               value={inputText}
               onChangeText={setInputText}
@@ -104,5 +111,6 @@ export default function ChatDetail() {
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }
