@@ -96,19 +96,19 @@ export default function ChatList() {
   );
 
   return (
-    <View className="flex-1 bg-white p-4">
+    <View className="flex-1 bg-white p-4 pt-16">
       <View className="flex-row items-center mb-3">
         <TextInput  placeholderTextColor="#666666"
           placeholder="Tìm kiếm tin nhắn..."
           value={searchText}
           onChangeText={setSearchText}
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2"
+          className="flex-1 bg-gray-100 rounded-xl px-4 py-3 text-base"
         />
         <TouchableOpacity
-          className="bg-purple-500 p-2 rounded-xl ml-2"
+          className="bg-purple-500 p-3 rounded-xl ml-3"
           onPress={() => setModalVisible(true)}
         >
-          <Ionicons name="add" size={15} color="#fff" />
+          <Ionicons name="add" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
