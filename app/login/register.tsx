@@ -52,7 +52,6 @@ const RegisterScreen = () => {
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
-
   const handleLogin = () => {
     Alert.alert('Thông báo!', 'Hiện tại chỉ hỗ trợ đăng nhập bằng Google.');
   };
@@ -68,7 +67,7 @@ const RegisterScreen = () => {
           <Text className="text-2xl font-bold mb-2">Đăng ký</Text>
           {/* <Text className="text-base mb-4">Đăng nhập tài khoản của bạn</Text>  */}
 
-          <Text className="text-base mt-2">Số điện thoại đăng kí</Text>
+          <Text className="text-base mt-2">Email</Text>
           <TextInput
             className="border border-gray-300 rounded-md p-2 mt-1 mb-2"
             value={phoneNumber}

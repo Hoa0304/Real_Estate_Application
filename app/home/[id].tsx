@@ -3,6 +3,7 @@ import { View, Text, Image, ScrollView, Pressable, TouchableWithoutFeedback } fr
 import { FontAwesome, Feather, Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { fullData } from '../../constants/data';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const RealEstateDetail = () => {
   const { id } = useLocalSearchParams();
@@ -20,6 +21,7 @@ const RealEstateDetail = () => {
   }
 
   return (
+    <SafeAreaView className="flex-1 bg-white">
     <TouchableWithoutFeedback>
       <ScrollView className="bg-white">
         <View className="relative">
@@ -82,6 +84,7 @@ const RealEstateDetail = () => {
         </View>
       </ScrollView>
     </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 
