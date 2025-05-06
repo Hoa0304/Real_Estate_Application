@@ -1,11 +1,11 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ChatList from '../chatbot/chatList';
+import ChatDetail from '../chatbot/chatDetail';
 
 const chatbot = () => {
   return (
-    <SafeAreaView className="flex-1 -mt-12 bg-white">
-      <ChatList />
+    <SafeAreaView className="flex-1 -mt-12 mb-8 bg-white">
+      <ChatDetail />
     </SafeAreaView>
 
   );

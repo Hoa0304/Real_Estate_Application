@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,10 +10,19 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import axios from "axios";
+
+type Message = {
+  id: number;
+  fromMe: boolean;
+  text: string;
+  time: string;
+};
 
 export default function ChatDetail() {
   const { user } = useLocalSearchParams<{ user: string }>();
@@ -21,26 +30,11 @@ export default function ChatDetail() {
   const scrollRef = useRef<ScrollView>(null);
 
   const [inputText, setInputText] = useState("");
-  const [messages, setMessages] = useState([
-    { id: 1, fromMe: false, text: "Hi, Jimmy! Any update today?", time: "09:32 PM" },
-    { id: 2, fromMe: true, text: "All good! we have some update", time: "09:34 PM" },
-    {
-      id: 3,
-      fromMe: true,
-      text: "I have updated the design for the “How it work” section. Please check it out.",
-      time: "09:34 PM",
-    },
-    {
-      id: 4,
-      fromMe: false,
-      text: "Cool! I have some feedbacks on the “How it work” section. but overall looks good now!",
-      time: "10:15 PM",
-    },
-    { id: 5, fromMe: true, text: "Perfect! Will check it", time: "09:34 PM" },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  const handleSend = async () => {
+    if (!inputText.trim() || loading) return;
 
     const currentTime = new Date();
     const formattedTime = currentTime.toLocaleTimeString([], {
@@ -49,12 +43,58 @@ export default function ChatDetail() {
       hour12: true,
     });
 
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), fromMe: true, text: inputText, time: formattedTime },
-    ]);
+    const userMessage: Message = {
+      id: Date.now(),
+      fromMe: true,
+      text: inputText,
+      time: formattedTime,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    const currentInput = inputText;
     setInputText("");
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+    setLoading(true);
+    try {
+      const replyText = await getAIResponse(currentInput);
+
+      const botTime = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      const botMessage: Message = {
+        id: Date.now() + 1,
+        fromMe: false,
+        text: replyText,
+        time: botTime,
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error: any) {
+      console.log("Lỗi:", error?.response?.data || error.message);
+      Alert.alert("Lỗi", "Không thể kết nối đến server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAIResponse = async (userInput: string): Promise<string> => {
+    const body = {
+      messages: [{ role: "user", content: userInput }],
+    };
+
+    try {
+      const response = await axios.post("http://192.168.1.162:3001/chat", body);
+      return response.data.content;
+    } catch (error: any) {
+      console.error("Lỗi gọi Flask:", error?.response?.data || error.message);
+      throw error;
+    }
   };
 
   return (
@@ -66,34 +106,27 @@ export default function ChatDetail() {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="flex-1">
-            {/* Header */}
             <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
               <Image
                 source={{ uri: userObj?.avatar }}
                 className="w-10 h-10 rounded-full mr-3"
               />
               <View className="flex-1">
-                <Text className="text-base font-semibold">{userObj?.name}</Text>
+                <Text className="text-base font-semibold">
+                  {userObj?.name || "AI Bot"}
+                </Text>
                 <Text className="text-xs text-green-500">Online</Text>
               </View>
-              <Ionicons
-                name="call-outline"
-                size={24}
-                color="gray"
-                className="mr-4"
-              />
+              <Ionicons name="call-outline" size={24} color="gray" className="mr-4" />
               <Ionicons name="videocam-outline" size={24} color="gray" />
             </View>
 
-            {/* Messages */}
             <ScrollView
               ref={scrollRef}
               className="px-4 py-2 flex-1"
               contentContainerStyle={{ flexGrow: 1 }}
               keyboardShouldPersistTaps="handled"
-              onContentSizeChange={() =>
-                scrollRef.current?.scrollToEnd({ animated: true })
-              }
+              showsVerticalScrollIndicator={true}
             >
               {messages.map((msg) => (
                 <View
@@ -112,9 +145,15 @@ export default function ChatDetail() {
                   <Text className="text-xs text-gray-400 mt-1">{msg.time}</Text>
                 </View>
               ))}
+              {loading && (
+                <View className="items-start mb-4">
+                  <View className="bg-gray-100 rounded-2xl px-4 py-2 max-w-[80%]">
+                    <Text className="text-black">Đang nhập...</Text>
+                  </View>
+                </View>
+              )}
             </ScrollView>
 
-            {/* Input */}
             <View className="flex-row items-center px-4 py-3 border-t border-gray-200 bg-white">
               <TextInput
                 placeholderTextColor="#666666"
@@ -122,9 +161,18 @@ export default function ChatDetail() {
                 className="flex-1 border border-gray-300 rounded-full px-4 py-3 mr-3 text-base"
                 value={inputText}
                 onChangeText={setInputText}
+                style={{
+                  flex: 1,
+                  fontSize: 16,
+                  lineHeight: 20,
+                }}
               />
-              <TouchableOpacity onPress={handleSend}>
-                <Ionicons name="send" size={24} color="#6366F1" />
+              <TouchableOpacity onPress={handleSend} disabled={loading}>
+                <Ionicons
+                  name="send"
+                  size={24}
+                  color={loading ? "#ccc" : "#6366F1"}
+                />
               </TouchableOpacity>
             </View>
           </View>

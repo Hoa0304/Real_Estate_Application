@@ -42,8 +42,8 @@ const CustomTabBarButton: React.FC<CustomTabBarButtonProps> = ({
         justifyContent: "center",
         alignItems: "center",
         marginTop: -50,
+        alignSelf: "center"
       },
-      shadowStyle,
     ]}
   >
     <TouchableOpacity
@@ -133,7 +133,6 @@ const RootLayout = () => {
           tabBarButton: (props: any) => <CustomTabBarButton {...props} />,
           tabBarIcon: ({ focused }: { focused: boolean }) => (
             <Ionicons
-              style={focused ? styles.focus : undefined}
               color="white"
               size={35}
               name="home"
