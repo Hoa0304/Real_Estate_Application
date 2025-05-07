@@ -22,7 +22,6 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyCoLgNL9kbzHpa1Lo8plk-rzOiBnNFWyYMAIzaSyCoLgNL9kbzHpa1Lo8plk-rzOiBnNFWyYM"

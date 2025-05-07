@@ -24,10 +24,9 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
     router.push({
       pathname: '/home/[id]',
       params: { id: item.id },
-    });    
+    });
   };
   
-
   return (
     <TouchableOpacity onPress={handlePress}>
       <View className="bg-white rounded-xl shadow p-3 mb-4">
@@ -49,7 +48,7 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
           </View>
           <View className="flex-row items-center">
             <TouchableOpacity className="bg-red-500 px-3 py-1 rounded-xl mr-2">
-              <Text className="text-white font-semibold">{item.contact}</Text>
+              <Text className="text-white font-semibold">{item.contact.phone}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => onFavoriteToggle(item)}>

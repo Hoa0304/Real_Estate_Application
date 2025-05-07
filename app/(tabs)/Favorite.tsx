@@ -1,13 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute } from '@react-navigation/native';
+import { fetchFavoritesFromFirebase } from '../../utils/fetchFavoritesFromFirebase';
+
+interface FavoriteItem {
+  id: string;
+  image: string;
+  title: string;
+  price: string;
+  location: string;
+}
 
 const Favorite = () => {
-  const route = useRoute();
-  const { favorites } = route.params || {}; 
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!favorites || favorites.length === 0) {
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const favs = await fetchFavoritesFromFirebase();
+        console.log("Dữ liệu yêu thích đã tải:", favs);
+        setFavorites(favs);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách yêu thích:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFavorites();
+  }, []);
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center">
+        <Text className="text-lg text-gray-500">Đang tải dữ liệu...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (favorites.length === 0) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center">
         <Text className="text-lg text-gray-500">Không có yêu thích nào để hiển thị</Text>
@@ -23,11 +55,11 @@ const Favorite = () => {
 
       <FlatList
         data={favorites}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="bg-white rounded-xl shadow p-4 mb-4">
             <Image
-              source={item.image}
+              source={{ uri: item.image }}
               className="w-full h-40 rounded-lg"
               resizeMode="cover"
             />

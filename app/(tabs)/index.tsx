@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchBar from '../home/SearchBar';
 import FilterBar from '../home/FilterBar';
 import RealEstateList from '../home/RealEstateList';
-import { fullData } from '@/constants/data';
+import useFetchRealEstatePosts from '../../hooks/useFetchRealEstatePosts';
 
 type FilterState = {
   type: boolean;
@@ -13,6 +13,8 @@ type FilterState = {
 };
 
 const Home = () => {
+  const { posts, loading } = useFetchRealEstatePosts();
+
   const [searchText, setSearchText] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
@@ -50,12 +52,13 @@ const Home = () => {
     return priceMatch ? parseFloat(priceMatch[0]) : 0;
   };
 
-  const extractAreaValue = (price: string) => {
-    const areaMatch = price.match(/(\d+)( m²)/);
+  const extractAreaValue = (area: string | number) => {
+    if (typeof area === 'number') return area;
+    const areaMatch = area.match(/(\d+)( m²)?/);
     return areaMatch ? parseFloat(areaMatch[1]) : 0;
   };
 
-  const filteredData = fullData.filter((item) => {
+  const filteredData = posts.filter((item) => {
     const matchType = selectedType ? item.type === selectedType : true;
     const matchPrice =
       selectedPrice === 'Dưới 1 tỷ'
@@ -67,15 +70,23 @@ const Home = () => {
         : true;
     const matchArea =
       selectedArea === 'Dưới 50 m²'
-        ? extractAreaValue(item.price) < 50
+        ? extractAreaValue(item.area) < 50
         : selectedArea === '50-100 m²'
-        ? extractAreaValue(item.price) >= 50 && extractAreaValue(item.price) <= 100
+        ? extractAreaValue(item.area) >= 50 && extractAreaValue(item.area) <= 100
         : selectedArea === 'Trên 100 m²'
-        ? extractAreaValue(item.price) > 100
+        ? extractAreaValue(item.area) > 100
         : true;
-    const matchSearch = item.title.toLowerCase().includes(searchText.toLowerCase());
+    const matchSearch = item.title?.toLowerCase().includes(searchText.toLowerCase());
     return matchType && matchPrice && matchArea && matchSearch;
   });
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#000" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">

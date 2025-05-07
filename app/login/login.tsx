@@ -108,7 +108,7 @@ const LoginScreen = () => {
 
             <TouchableOpacity onPress={onPress} className=" flex-row justify-center items-end bg-blue-400 py-2 rounded-md ">
               <Image source={images.logo} className='size-7' />
-              <Text className='font-medium text-[16px] text-white'>oogle</Text>
+              <Text className='font-medium text-[16px] text-white'>Google</Text>
             </TouchableOpacity>
           </View>
 

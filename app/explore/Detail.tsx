@@ -15,9 +15,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps'; // Dùng react-native-maps để hiển thị bản đồ
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location'; // Nhập expo-location
 import debounce from 'lodash/debounce'; // Thêm lodash để dùng debounce
+import { Platform } from 'react-native';
+
 
 export default function Detail() {
   const router = useRouter();
@@ -370,7 +372,7 @@ export default function Detail() {
               style={{ width: '100%', height: 300, marginBottom: 10 }}
               region={region} // Center the map on the selected region
               onPress={handleMapPress}
-              provider="google" // Use Google Maps as the provider
+              provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
             >
               {selectedLocation && (
                 <Marker
