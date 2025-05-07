@@ -85,7 +85,6 @@ const RealEstateDetail = () => {
 
           <View className="px-4 py-2 border-b border-gray-200">
             <Text className="text-red-600 text-xl font-semibold">{item.price}</Text>
-            <Text className="text-gray-500">~169 triệu/m²</Text>
             <Text className="mt-2 text-gray-700">
               {item.bedrooms} PN • {item.bathrooms} WC • {item.floors} tầng
             </Text>

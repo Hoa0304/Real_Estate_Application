@@ -4,7 +4,7 @@ import ChatDetail from '../chatbot/chatDetail';
 
 const chatbot = () => {
   return (
-    <SafeAreaView className="flex-1 -mt-12 mb-8 bg-white">
+    <SafeAreaView className="flex-1 -mt-12 -mb-10 bg-white">
       <ChatDetail />
     </SafeAreaView>
 

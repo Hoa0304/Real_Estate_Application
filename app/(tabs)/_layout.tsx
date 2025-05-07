@@ -116,6 +116,7 @@ const RootLayout = () => {
         name="chatbot"
         options={{
           tabBarLabel: () => null,
+          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused }: { focused: boolean }) => (
             <Ionicons
               color={focused ? "red" : "#A3A2A9"}

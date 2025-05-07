@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  Image,
   ScrollView,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -12,13 +11,22 @@ import {
   TouchableWithoutFeedback,
   Alert,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
+import { useAuth } from "@clerk/clerk-expo";
+import { db } from "../../firebaseConfig";
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
 
 type Message = {
-  id: number;
+  id: string;
   fromMe: boolean;
   text: string;
   time: string;
@@ -27,16 +35,48 @@ type Message = {
 export default function ChatDetail() {
   const { user } = useLocalSearchParams<{ user: string }>();
   const userObj = user ? JSON.parse(user) : null;
+  const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+
+  const { userId, isLoaded } = useAuth();
 
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (!isLoaded || !userId) return;
+
+    const q = query(
+      collection(db, `user/${userId}/chats`),
+      orderBy("createdAt", "asc")
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const messagesList: Message[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        messagesList.push({
+          id: doc.id,
+          fromMe: data.fromMe,
+          text: data.text,
+          time: data.time?.toDate?.().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }) ?? "",
+        });
+      });
+      setMessages(messagesList);
+    });
+
+    return () => unsubscribe();
+  }, [userId, isLoaded]);
 
   const handleSend = async () => {
-    if (!inputText.trim() || loading) return;
+    if (!inputText.trim() || loading || !userId || !isLoaded) return;
 
     const currentTime = new Date();
+
     const formattedTime = currentTime.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -44,34 +84,37 @@ export default function ChatDetail() {
     });
 
     const userMessage: Message = {
-      id: Date.now(),
+      id: Date.now().toString(),
       fromMe: true,
       text: inputText,
       time: formattedTime,
     };
 
     setMessages((prev) => [...prev, userMessage]);
+
     const currentInput = inputText;
     setInputText("");
-
     setLoading(true);
-    try {
-      const replyText = await getAIResponse(currentInput);
 
-      const botTime = new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
+    try {
+      await addDoc(collection(db, `user/${userId}/chats`), {
+        fromMe: true,
+        text: currentInput,
+        time: currentTime,
+        createdAt: currentTime,
       });
 
-      const botMessage: Message = {
-        id: Date.now() + 1,
+      const replyText = await getAIResponse(currentInput);
+
+      const botTime = new Date();
+
+      await addDoc(collection(db, `user/${userId}/chats`), {
         fromMe: false,
         text: replyText,
         time: botTime,
-      };
+        createdAt: botTime,
+      });
 
-      setMessages((prev) => [...prev, botMessage]);
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -89,7 +132,7 @@ export default function ChatDetail() {
     };
 
     try {
-      const response = await axios.post("http://192.168.1.162:3001/chat", body);
+      const response = await axios.post("http://192.168.1.169:3001/chat", body);
       return response.data.content;
     } catch (error: any) {
       console.error("Lỗi gọi Flask:", error?.response?.data || error.message);
@@ -107,18 +150,12 @@ export default function ChatDetail() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="flex-1">
             <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
-              <Image
-                source={{ uri: userObj?.avatar }}
-                className="w-10 h-10 rounded-full mr-3"
-              />
-              <View className="flex-1">
-                <Text className="text-base font-semibold">
-                  {userObj?.name || "AI Bot"}
-                </Text>
-                <Text className="text-xs text-green-500">Online</Text>
-              </View>
-              <Ionicons name="call-outline" size={24} color="gray" className="mr-4" />
-              <Ionicons name="videocam-outline" size={24} color="gray" />
+              <TouchableOpacity onPress={() => router.back()} className="mr-3">
+                <Ionicons name="arrow-back" size={20} color="black" />
+              </TouchableOpacity>
+              <Text className="text-base font-semibold flex-1">
+                {userObj?.name || "AI Bot"}
+              </Text>
             </View>
 
             <ScrollView
@@ -126,7 +163,7 @@ export default function ChatDetail() {
               className="px-4 py-2 flex-1"
               contentContainerStyle={{ flexGrow: 1 }}
               keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator
             >
               {messages.map((msg) => (
                 <View
