@@ -4,7 +4,7 @@ import FilterButton from './FilterButton';
 
 type Props = {
   isFilterVisible: { type: boolean; price: boolean; area: boolean };
-  selectedType: string | null;
+  selectedCategory: string | null;
   selectedPrice: string | null;
   selectedArea: string | null;
   handleFilterPress: (key: 'type' | 'price' | 'area') => void;
@@ -13,7 +13,7 @@ type Props = {
 
 const FilterBar = ({
   isFilterVisible,
-  selectedType,
+  selectedCategory,
   selectedPrice,
   selectedArea,
   handleFilterPress,
@@ -22,24 +22,24 @@ const FilterBar = ({
   return (
     <View className="flex-row justify-between gap-2 relative">
       <FilterButton
-        title={selectedType || 'Loại nhà đất'}
+        title={selectedCategory || 'Loại nhà đất'}
         onPress={() => handleFilterPress('type')}
         isVisible={isFilterVisible.type}
-        options={['Nhà phố', 'Căn hộ', 'Biệt thự']}
-        onOptionSelect={(type) => handleFilterSelect('type', type)}
+        options={['Tất cả', 'Nhà phố', 'Căn hộ', 'Biệt thự']}
+        onOptionSelect={(category) => handleFilterSelect('type', category)}
       />
       <FilterButton
         title={selectedPrice || 'Mức giá'}
         onPress={() => handleFilterPress('price')}
         isVisible={isFilterVisible.price}
-        options={['Dưới 1 tỷ', '1-2 tỷ', 'Trên 2 tỷ']}
+        options={['Tất cả', 'Dưới 2 tỷ', '2-10 tỷ', 'Trên 10 tỷ']}
         onOptionSelect={(price) => handleFilterSelect('price', price)}
       />
       <FilterButton
         title={selectedArea || 'Diện tích'}
         onPress={() => handleFilterPress('area')}
         isVisible={isFilterVisible.area}
-        options={['Dưới 50 m²', '50-100 m²', 'Trên 100 m²']}
+        options={['Tất cả', 'Dưới 50 m²', '50-100 m²', 'Trên 100 m²']}
         onOptionSelect={(area) => handleFilterSelect('area', area)}
       />
     </View>

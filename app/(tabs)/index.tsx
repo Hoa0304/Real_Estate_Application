@@ -16,7 +16,7 @@ const Home = () => {
   const { posts, loading } = useFetchRealEstatePosts();
 
   const [searchText, setSearchText] = useState('');
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [isFilterVisible, setIsFilterVisible] = useState<FilterState>({
@@ -25,6 +25,8 @@ const Home = () => {
     area: false,
   });
   const [favorites, setFavorites] = useState<any[]>([]);
+
+  const normalize = (value: string) => value?.toLowerCase().trim();
 
   const handleFavoriteToggle = (item: any) => {
     const exists = favorites.some((fav) => fav.id === item.id);
@@ -41,9 +43,10 @@ const Home = () => {
   };
 
   const handleFilterSelect = (key: string, value: string) => {
-    if (key === 'type') setSelectedType(value);
-    if (key === 'price') setSelectedPrice(value);
-    if (key === 'area') setSelectedArea(value);
+    const selected = value === 'Tất cả' ? null : value;
+    if (key === 'type') setSelectedCategory(selected);
+    if (key === 'price') setSelectedPrice(selected);
+    if (key === 'area') setSelectedArea(selected);
     setIsFilterVisible((prev) => ({ ...prev, [key]: false }));
   };
 
@@ -59,15 +62,19 @@ const Home = () => {
   };
 
   const filteredData = posts.filter((item) => {
-    const matchType = selectedType ? item.type === selectedType : true;
+    const matchCategory = selectedCategory
+      ? normalize(item.category) === normalize(selectedCategory)
+      : true;
+
     const matchPrice =
-      selectedPrice === 'Dưới 1 tỷ'
-        ? extractPriceValue(item.price) < 1
-        : selectedPrice === '1-2 tỷ'
-        ? extractPriceValue(item.price) >= 1 && extractPriceValue(item.price) <= 2
-        : selectedPrice === 'Trên 2 tỷ'
-        ? extractPriceValue(item.price) > 2
+      selectedPrice === 'Dưới 2 tỷ'
+        ? extractPriceValue(item.price) < 2
+        : selectedPrice === '2-10 tỷ'
+        ? extractPriceValue(item.price) >= 2 && extractPriceValue(item.price) <= 10
+        : selectedPrice === 'Trên 10 tỷ'
+        ? extractPriceValue(item.price) > 10
         : true;
+
     const matchArea =
       selectedArea === 'Dưới 50 m²'
         ? extractAreaValue(item.area) < 50
@@ -76,8 +83,10 @@ const Home = () => {
         : selectedArea === 'Trên 100 m²'
         ? extractAreaValue(item.area) > 100
         : true;
+
     const matchSearch = item.title?.toLowerCase().includes(searchText.toLowerCase());
-    return matchType && matchPrice && matchArea && matchSearch;
+
+    return matchCategory && matchPrice && matchArea && matchSearch;
   });
 
   if (loading) {
@@ -94,7 +103,7 @@ const Home = () => {
         <SearchBar searchText={searchText} onChangeText={setSearchText} />
         <FilterBar
           isFilterVisible={isFilterVisible}
-          selectedType={selectedType}
+          selectedCategory={selectedCategory}
           selectedPrice={selectedPrice}
           selectedArea={selectedArea}
           handleFilterPress={handleFilterPress}

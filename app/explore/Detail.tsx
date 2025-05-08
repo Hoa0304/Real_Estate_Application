@@ -13,6 +13,7 @@ import {
   FlatList,
   Image,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -21,10 +22,10 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import debounce from 'lodash/debounce';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { collection, addDoc } from 'firebase/firestore';
 import { useAuth, useUser } from '@clerk/clerk-expo';
-import { auth, db } from '../../firebaseConfig';
+import { db } from '../../firebaseConfig';
 
 export default function Detail() {
   const router = useRouter();
@@ -45,7 +46,6 @@ export default function Detail() {
   const [propertyType, setPropertyType] = useState('');
   const [area, setArea] = useState('');
   const [price, setPrice] = useState('');
-  const [unit, setUnit] = useState('');
   const [bedrooms, setBedrooms] = useState(8);
   const [bathrooms, setBathrooms] = useState(4);
   const [floors, setFloors] = useState(4);
@@ -54,7 +54,13 @@ export default function Detail() {
   const [phone, setPhone] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [images, setImages] = useState([]); // State để lưu URL của các ảnh
+  const [images, setImages] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([
+    { label: 'Nhà phố', value: 'townhouse' },
+    { label: 'Căn hộ', value: 'apartment' },
+    { label: 'Biệt thự', value: 'Villa' },
+  ]);
 
   const options = [
     { id: 1, label: 'Bán', icon: 'cash-outline' },
@@ -309,198 +315,208 @@ export default function Detail() {
           <Text className="text-[14px] font-medium text-gray-500 border rounded-3xl p-2 px-2">Thoát</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView className="flex-1 bg-gray-100 p-4">
-        <TouchableOpacity
-          className="bg-white p-4 rounded-2xl mb-4"
-          onPress={() => setShowMapModal(true)}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView
+          className="flex-1 bg-gray-100 p-4"
+          keyboardShouldPersistTaps="handled"
         >
-          <Text className="font-medium mb-1">Địa chỉ BĐS</Text>
-          <TextInput
-            multiline={true}
-            keyboardType="default"
-            textBreakStrategy="simple"
-            className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-            placeholder="Chọn địa chỉ trên bản đồ"
-            value={address}
-            editable={false}
-          />
-        </TouchableOpacity>
 
-        <View className="bg-white p-4 rounded-2xl mb-4">
-          <Text className="font-medium mb-2">Hình ảnh (Tối đa 10 ảnh)</Text>
           <TouchableOpacity
-            className="bg-gray-200 p-2 rounded-lg mb-2"
-            onPress={pickMultipleImages}
+            className="bg-white p-4 rounded-2xl mb-4"
+            onPress={() => setShowMapModal(true)}
           >
-            <Text className="text-center">Chọn nhiều ảnh</Text>
+            <Text className="font-medium mb-1">Địa chỉ BĐS</Text>
+            <TextInput
+              multiline={true}
+              keyboardType="default"
+              textBreakStrategy="simple"
+              className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
+              placeholder="Chọn địa chỉ trên bản đồ"
+              value={address}
+              editable={false}
+            />
           </TouchableOpacity>
-          <FlatList
-            data={images}
-            horizontal
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item, index }) => (
-              <View className="relative">
-                <Image
-                  source={{ uri: item }}
-                  style={{ width: 100, height: 100, marginRight: 10 }}
-                />
-                <TouchableOpacity
-                  className="absolute top-1 right-11 bg-red-500 rounded-full p-1"
-                  onPress={() => removeImage(index)}
-                >
-                  <Ionicons name="close" size={16} color="white" />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
 
-        <View className="bg-white p-4 rounded-2xl mb-4">
-          <Text className="font-medium mb-2">Thông tin chính</Text>
-          <View>
-            <Text className="text-sm font-medium">Loại BĐS</Text>
-            <TextInput
-              multiline={true}
-              keyboardType="default"
-              textBreakStrategy="simple"
-              className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-              placeholder="Loại BĐS"
-              value={propertyType}
-              onChangeText={setPropertyType}
-            />
-          </View>
-          <View>
-            <Text className="text-sm font-medium">Diện Tích m2</Text>
-            <TextInput
-              multiline={true}
-              keyboardType="default"
-              textBreakStrategy="simple"
-              className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-              placeholder="Nhập diện tích"
-              value={area}
-              onChangeText={setArea}
-            />
-          </View>
-          <View className="flex-row justify-between items-center">
-            <View className="w-[70%]">
-              <Text className="text-sm font-medium">Mức giá</Text>
-              <TextInput
-                multiline={true}
-                keyboardType="default"
-                textBreakStrategy="simple"
-                className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-                placeholder="Nhập mức giá"
-                value={price}
-                onChangeText={setPrice}
-              />
-            </View>
-            <View className="w-[20%]">
-              <Text className="text-sm font-medium">Đơn vị</Text>
-              <TextInput
-                multiline={true}
-                keyboardType="default"
-                textBreakStrategy="simple"
-                className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-                placeholder="Đơn vị"
-                value={unit}
-                onChangeText={setUnit}
-              />
-            </View>
-          </View>
-        </View>
-
-        <View className="bg-white p-4 rounded-2xl mb-4">
-          {[
-            { label: 'Số phòng ngủ', value: bedrooms, setValue: setBedrooms },
-            { label: 'Số phòng tắm, vệ sinh', value: bathrooms, setValue: setBathrooms },
-            { label: 'Số tầng', value: floors, setValue: setFloors },
-          ].map(({ label, value, setValue }, i) => (
-            <View key={i} className="flex-row justify-between items-center mt-4">
-              <Text className="text-sm font-medium">{label}</Text>
-              <View className="flex-row items-center space-x-3">
-                <Pressable
-                  className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
-                  onPress={() => setValue(Math.max(0, value - 1))}
-                >
-                  <Text className="text-xl font-semibold">-</Text>
-                </Pressable>
-                <Text className="text-base mx-2">{value}</Text>
-                <Pressable
-                  className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
-                  onPress={() => setValue(value + 1)}
-                >
-                  <Text className="text-xl font-semibold">+</Text>
-                </Pressable>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        <View className="bg-white p-4 rounded-2xl mb-4">
-          <Text className="font-medium mb-2">Thông tin liên hệ</Text>
-          <View>
-            <Text className="text-sm font-medium">Tên liên hệ</Text>
-            <TextInput
-              multiline={true}
-              keyboardType="default"
-              textBreakStrategy="simple"
-              className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-              placeholder="Tên liên hệ"
-              value={contactName}
-              onChangeText={setContactName}
-            />
-          </View>
-          <View>
-            <Text className="text-sm font-medium">Email</Text>
-            <TextInput
-              className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-          <View>
-            <Text className="text-sm font-medium">Số điện thoại</Text>
-            <TextInput
-              className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
-              placeholder="Nhập số điện thoại"
-              value={phone}
-              onChangeText={setPhone}
-            />
-          </View>
-        </View>
-
-        <View className="bg-white p-4 rounded-2xl mb-4">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="font-semibold text-base">Tiêu đề & Mô tả</Text>
-            <TouchableOpacity className="flex-row items-center bg-purple-100 px-3 py-2 rounded-2xl">
-              <Ionicons name="sparkles-outline" size={16} color="#7c3aed" />
-              <Text className="text-sm font-medium text-purple-700 ml-1">Tạo với AI</Text>
+          <View className="bg-white p-4 rounded-2xl mb-4">
+            <Text className="font-medium mb-2">Hình ảnh (Tối đa 10 ảnh)</Text>
+            <TouchableOpacity
+              className="bg-gray-200 p-2 rounded-lg mb-2"
+              onPress={pickMultipleImages}
+            >
+              <Text className="text-center">Chọn nhiều ảnh</Text>
             </TouchableOpacity>
+            <FlatList
+              data={images}
+              horizontal
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item, index }) => (
+                <View className="relative">
+                  <Image
+                    source={{ uri: item }}
+                    style={{ width: 100, height: 100, marginRight: 10 }}
+                  />
+                  <TouchableOpacity
+                    className="absolute top-1 right-11 bg-red-500 rounded-full p-1"
+                    onPress={() => removeImage(index)}
+                  >
+                    <Ionicons name="close" size={16} color="white" />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
           </View>
 
-          <Text className="text-sm font-medium mb-1">Tiêu đề</Text>
-          <TextInput
-            className="border border-gray-300 bg-white text-sm rounded-xl p-3 mb-1"
-            placeholder="Mô tả ngắn gọn về loại hình bất động sản, diện tích, địa chỉ..."
-            multiline
-            value={title}
-            onChangeText={setTitle}
-          />
-          <Text className="text-gray-400 text-xs mb-4">Tối thiểu 30 ký tự, tối đa 99 ký tự</Text>
+          <View className="bg-white p-4 rounded-2xl mb-4">
+            <Text className="font-medium mb-2">Thông tin chính</Text>
+            <View className="bg-white rounded-2xl">
+              <Text className="font-medium mb-2">Loại BĐS</Text>
+              <DropDownPicker
+                open={open}
+                value={propertyType}
+                items={items}
+                setOpen={setOpen}
+                setValue={setPropertyType}
+                setItems={setItems}
+                placeholder="Chọn loại bất động sản"
+                style={{
+                  borderColor: '#ccc',
+                  borderRadius: 16,
+                  backgroundColor: '#f3f4f6',
+                }}
+                dropDownContainerStyle={{
+                  borderColor: '#ccc',
+                  borderRadius: 16,
+                  backgroundColor: '#fff',
+                  padding: 0,
+                }}
+                textStyle={{
+                  fontSize: 14,
+                }}
+              />
+            </View>
+            <View>
+              <Text className="text-sm font-medium">Diện Tích m²</Text>
+              <TextInput
+                multiline={true}
+                keyboardType="default"
+                textBreakStrategy="simple"
+                className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
+                placeholder="Nhập diện tích"
+                value={area}
+                onChangeText={setArea}
+              />
+            </View>
+            <View className="flex-row justify-between items-center">
+              <View className="w-[100%]">
+                <Text className="text-sm font-medium">Mức giá</Text>
+                <TextInput
+                  multiline={true}
+                  keyboardType="default"
+                  textBreakStrategy="simple"
+                  className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
+                  placeholder="Nhập mức giá"
+                  value={price}
+                  onChangeText={setPrice}
+                />
+              </View>
 
-          <Text className="text-sm font-medium mb-1">Mô tả</Text>
-          <TextInput
-            className="border border-gray-300 bg-white text-sm rounded-xl p-3"
-            placeholder={`Mô tả chi tiết về:\n• loại hình bất động sản\n• vị trí\n• diện tích, tiện ích\n• tình trạng nội thất\n\n(VD: Khu nhà có vị trí thuận lợi, gần công viên, trường học...)`}
-            multiline
-            numberOfLines={5}
-            value={description}
-            onChangeText={setDescription}
-          />
-          <Text className="text-gray-400 text-xs mt-2">Tối thiểu 30 ký tự, tối đa 3000 ký tự</Text>
-        </View>
-      </ScrollView>
+            </View>
+          </View>
+
+          <View className="bg-white p-4 rounded-2xl mb-4">
+            {[
+              { label: 'Số phòng ngủ', value: bedrooms, setValue: setBedrooms },
+              { label: 'Số phòng tắm, vệ sinh', value: bathrooms, setValue: setBathrooms },
+              { label: 'Số tầng', value: floors, setValue: setFloors },
+            ].map(({ label, value, setValue }, i) => (
+              <View key={i} className="flex-row justify-between items-center mt-4">
+                <Text className="text-sm font-medium">{label}</Text>
+                <View className="flex-row items-center space-x-3">
+                  <Pressable
+                    className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+                    onPress={() => setValue(Math.max(0, value - 1))}
+                  >
+                    <Text className="text-xl font-semibold">-</Text>
+                  </Pressable>
+                  <Text className="text-base mx-2">{value}</Text>
+                  <Pressable
+                    className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+                    onPress={() => setValue(value + 1)}
+                  >
+                    <Text className="text-xl font-semibold">+</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View className="bg-white p-4 rounded-2xl mb-4">
+            <Text className="font-medium mb-2">Thông tin liên hệ</Text>
+            <View>
+              <Text className="text-sm font-medium">Tên liên hệ</Text>
+              <TextInput
+                multiline={true}
+                keyboardType="default"
+                textBreakStrategy="simple"
+                className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
+                placeholder="Tên liên hệ"
+                value={contactName}
+                onChangeText={setContactName}
+              />
+            </View>
+            <View>
+              <Text className="text-sm font-medium">Email</Text>
+              <TextInput
+                className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+            <View>
+              <Text className="text-sm font-medium">Số điện thoại</Text>
+              <TextInput
+                className="border border-gray-300 bg-gray-200 rounded-3xl px-4 py-2 mt-1 mb-3"
+                placeholder="Nhập số điện thoại"
+                value={phone}
+                onChangeText={setPhone}
+              />
+            </View>
+          </View>
+
+          <View className="bg-white p-4 rounded-2xl mb-4">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="font-semibold text-base">Tiêu đề & Mô tả</Text>
+
+            </View>
+
+            <Text className="text-sm font-medium mb-1">Tiêu đề</Text>
+            <TextInput
+              className="border border-gray-300 bg-white text-sm rounded-xl p-3 mb-1"
+              placeholder="Mô tả ngắn gọn về loại hình bất động sản, diện tích, địa chỉ..."
+              multiline
+              value={title}
+              onChangeText={setTitle}
+            />
+            <Text className="text-gray-400 text-xs mb-4">Tối thiểu 30 ký tự, tối đa 99 ký tự</Text>
+
+            <Text className="text-sm font-medium mb-1">Mô tả</Text>
+            <TextInput
+              className="border border-gray-300 bg-white text-sm rounded-xl p-3"
+              placeholder={`Mô tả chi tiết về:\n• loại hình bất động sản\n• vị trí\n• diện tích, tiện ích\n• tình trạng nội thất\n\n(VD: Khu nhà có vị trí thuận lợi, gần công viên, trường học...)`}
+              multiline
+              numberOfLines={5}
+              value={description}
+              onChangeText={setDescription}
+            />
+            <Text className="text-gray-400 text-xs mt-2">Tối thiểu 30 ký tự, tối đa 3000 ký tự</Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
       <TouchableOpacity onPress={handleContinue} className="bg-red-600 py-3 rounded-full items-center mx-10 my-5">
         <Text className="text-white font-semibold text-base">Tiếp tục</Text>
       </TouchableOpacity>
@@ -526,7 +542,7 @@ export default function Detail() {
                 keyExtractor={(item, index) => `${item.place_id || index}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity
-                    className="p-2 border-b border-gray-200"
+                    className="p-2 border-b"
                     onPress={() => handleSelectSuggestion(item)}
                   >
                     <Text>{item.display_name}</Text>
