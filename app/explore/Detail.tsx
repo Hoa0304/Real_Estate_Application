@@ -57,9 +57,9 @@ export default function Detail() {
   const [images, setImages] = useState([]);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([
-    { label: 'Nhà phố', value: 'townhouse' },
-    { label: 'Căn hộ', value: 'apartment' },
-    { label: 'Biệt thự', value: 'Villa' },
+    { label: 'Nhà phố', value: 'Nhà phố' },
+    { label: 'Căn hộ', value: 'Căn hộ' },
+    { label: 'Biệt thự', value: 'Biệt thự' },
   ]);
 
   const options = [
