@@ -22,7 +22,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import debounce from 'lodash/debounce';
-import DropDownPicker from 'react-native-dropdown-picker';
+import CheckBox from 'react-native';
 import { collection, addDoc } from 'firebase/firestore';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { db } from '../../firebaseConfig';
@@ -55,12 +55,7 @@ export default function Detail() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [images, setImages] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [items, setItems] = useState([
-    { label: 'Nhà phố', value: 'Nhà phố' },
-    { label: 'Căn hộ', value: 'Căn hộ' },
-    { label: 'Biệt thự', value: 'Biệt thự' },
-  ]);
+
 
   const options = [
     { id: 1, label: 'Bán', icon: 'cash-outline' },
@@ -375,29 +370,12 @@ export default function Detail() {
             <Text className="font-medium mb-2">Thông tin chính</Text>
             <View className="bg-white rounded-2xl">
               <Text className="font-medium mb-2">Loại BĐS</Text>
-              <DropDownPicker
-                open={open}
-                value={propertyType}
-                items={items}
-                setOpen={setOpen}
-                setValue={setPropertyType}
-                setItems={setItems}
-                placeholder="Chọn loại bất động sản"
-                style={{
-                  borderColor: '#ccc',
-                  borderRadius: 16,
-                  backgroundColor: '#f3f4f6',
-                }}
-                dropDownContainerStyle={{
-                  borderColor: '#ccc',
-                  borderRadius: 16,
-                  backgroundColor: '#fff',
-                  padding: 0,
-                }}
-                textStyle={{
-                  fontSize: 14,
-                }}
-              />
+              <View>
+            <TextInput
+              className="border border-gray-300 bg-gray-200  rounded-3xl px-4 py-2 mt-1 mb-3"
+              placeholder="Loại BĐS"
+            />
+          </View>
             </View>
             <View>
               <Text className="text-sm font-medium">Diện Tích m²</Text>

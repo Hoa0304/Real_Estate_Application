@@ -4,18 +4,20 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import images from "@/constants/images";
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 
 const HomeScreen = () => {
     const { user } = useUser();
     const router = useRouter();
     const [postCount, setPostCount] = useState(0);
+    const [predictionCount, setPredictionCount] = useState(0);
     const [posts, setPosts] = useState([]);
 
+    // Lắng nghe bài đăng bất động sản
     useEffect(() => {
         if (!user?.id) return;
-    
+
         const q = query(collection(db, 'real_estate_posts'), where('userId', '==', user.id));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const userPosts = querySnapshot.docs.map(doc => ({
@@ -29,10 +31,24 @@ const HomeScreen = () => {
             setPosts([]);
             setPostCount(0);
         });
-    
+
         return () => unsubscribe();
     }, [user?.id]);
-    
+
+    // Lắng nghe số lượng dự đoán
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const predictRef = collection(db, 'user', user.id, 'predict');
+        const unsubscribe = onSnapshot(predictRef, (querySnapshot) => {
+            setPredictionCount(querySnapshot.size);
+        }, (error) => {
+            console.error('Lỗi khi lấy dữ liệu dự đoán:', error);
+            setPredictionCount(0);
+        });
+
+        return () => unsubscribe();
+    }, [user?.id]);
 
     const handlePost = () => {
         router.push('/explore/Detail');
@@ -44,15 +60,10 @@ const HomeScreen = () => {
 
     const getBuoiHienTai = () => {
         const hour = new Date().getHours();
-        if (hour >= 5 && hour < 11) {
-            return "sáng";
-        } else if (hour >= 11 && hour < 13) {
-            return "trưa";
-        } else if (hour >= 13 && hour < 18) {
-            return "chiều";
-        } else {
-            return "tối";
-        }
+        if (hour >= 5 && hour < 11) return "sáng";
+        if (hour >= 11 && hour < 13) return "trưa";
+        if (hour >= 13 && hour < 18) return "chiều";
+        return "tối";
     };
 
     const fullName = user?.fullName || 'Người dùng';
@@ -80,8 +91,10 @@ const HomeScreen = () => {
                 <View className="bg-white rounded-2xl p-4 mt-4 items-center">
                     <Image source={images.home} className="w-[200px] h-[100px] mb-2" />
                     <Text className="text-red-600 font-bold text-lg mb-2">Quà tặng 1 tin thường 15 ngày</Text>
-                    <Text className="text-gray-600 text-sm text-center mb-4">Tin đăng của bạn sẽ được tiếp cận hơn 6 triệu người tìm mua / thuê bất động sản mỗi tháng</Text>
-                    
+                    <Text className="text-gray-600 text-sm text-center mb-4">
+                        Tin đăng của bạn sẽ được tiếp cận hơn 6 triệu người tìm mua / thuê bất động sản mỗi tháng
+                    </Text>
+
                     <TouchableOpacity className="bg-red-600 rounded-full px-6 py-2" onPress={handlePost}>
                         <Text className="text-white font-semibold">+ Tạo tin đăng đầu tiên</Text>
                     </TouchableOpacity>
@@ -104,7 +117,7 @@ const HomeScreen = () => {
                     <View className="flex-1 items-center">
                         <Ionicons name="people-outline" size={24} color="gray" />
                         <Text className="text-sm mt-1">Dự đoán giá</Text>
-                        <Text className="text-xl font-bold">0 bài</Text>
+                        <Text className="text-xl font-bold">{predictionCount} bài</Text>
                         <Text className="text-sm">Được lưu</Text>
                     </View>
                 </View>
