@@ -43,6 +43,7 @@ export default function ChatDetail() {
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     if (!isLoaded || !userId) return;
 
@@ -72,11 +73,14 @@ export default function ChatDetail() {
     return () => unsubscribe();
   }, [userId, isLoaded]);
 
+  useEffect(() => {
+    scrollRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
+
   const handleSend = async () => {
     if (!inputText.trim() || loading || !userId || !isLoaded) return;
 
     const currentTime = new Date();
-
     const formattedTime = currentTime.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -91,7 +95,6 @@ export default function ChatDetail() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
-
     const currentInput = inputText;
     setInputText("");
     setLoading(true);
@@ -105,7 +108,6 @@ export default function ChatDetail() {
       });
 
       const replyText = await getAIResponse(currentInput);
-
       const botTime = new Date();
 
       await addDoc(collection(db, `user/${userId}/chats`), {
@@ -114,10 +116,6 @@ export default function ChatDetail() {
         time: botTime,
         createdAt: botTime,
       });
-
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 100);
     } catch (error: any) {
       console.log("Lỗi:", error?.response?.data || error.message);
       Alert.alert("Lỗi", "Không thể kết nối đến server.");
@@ -132,7 +130,7 @@ export default function ChatDetail() {
     };
 
     try {
-      const response = await axios.post("http://127.0.0.1:3001/chat", body);
+      const response = await axios.post("http://192.168.1.174:3001/chat", body, { timeout: 15000 });
       return response.data.content;
     } catch (error: any) {
       console.error("Lỗi gọi Flask:", error?.response?.data || error.message);
