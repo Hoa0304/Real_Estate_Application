@@ -16,22 +16,23 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import debounce from 'lodash/debounce';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { db } from '../../firebaseConfig';
 
-export default function Detail() {
+export default function EditScreen() {
+  const { id } = useLocalSearchParams();
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const [showOptions] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
   const [region, setRegion] = useState({
     latitude: 14.0583,
     longitude: 108.2772,
@@ -41,7 +42,6 @@ export default function Detail() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [address, setAddress] = useState('');
   const [inputAddress, setInputAddress] = useState('');
-  const [showMapModal, setShowMapModal] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [propertyType, setPropertyType] = useState('');
   const [area, setArea] = useState('');
@@ -59,49 +59,45 @@ export default function Detail() {
   const [items, setItems] = useState([
     { label: 'Nhà phố', value: 'townhouse' },
     { label: 'Căn hộ', value: 'apartment' },
-    { label: 'Biệt thự', value: 'Villa' },
+    { label: 'Biệt thự', value: 'villa' },
   ]);
 
-  const options = [
-    { id: 1, label: 'Bán', icon: 'cash-outline' },
-    { id: 2, label: 'Cho thuê', icon: 'key-outline' },
-  ];
-  const dropdownHeight = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Quyền truy cập vị trí bị từ chối', 'Vui lòng cấp quyền để sử dụng bản đồ.');
-        return;
+    const fetchPostData = async () => {
+      if (!id || !isSignedIn || !user) return;
+      try {
+        const docRef = doc(db, 'real_estate_posts', id.toString());
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setAddress(data.location || '');
+          setPropertyType(data.category || '');
+          setArea(data.area || '');
+          setPrice(data.price || '');
+          setBedrooms(data.bedrooms || 0);
+          setBathrooms(data.bathrooms || 0);
+          setFloors(data.floors || 0);
+          setContactName(data.contact?.name || '');
+          setEmail(data.contact?.email || '');
+          setPhone(data.contact?.phone || '');
+          setTitle(data.title || '');
+          setDescription(data.description || '');
+          setImages(data.images || []);
+        } else {
+          Alert.alert('Lỗi', 'Không tìm thấy bài đăng.');
+          router.back();
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu bài đăng:', error);
+        Alert.alert('Lỗi', 'Không thể tải dữ liệu bài đăng.');
       }
+    };
+    fetchPostData();
+  }, [id, isSignedIn, user]);
 
-      let location = await Location.getCurrentPositionAsync({});
-      setRegion((prevRegion) => ({
-        ...prevRegion,
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      }));
-    })();
-  }, []);
-
-  useEffect(() => {
-    Animated.timing(dropdownHeight, {
-      toValue: showOptions ? options.length * 40 : 0,
-      duration: 200,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: false,
-    }).start();
-  }, [showOptions]);
-
-  // Upload ảnh lên Cloudinary
   const uploadImage = async (uri) => {
     const data = new FormData();
-    data.append('file', {
-      uri,
-      type: 'image/jpeg',
-      name: 'image.jpg',
-    });
+    data.append('file', { uri, type: 'image/jpeg', name: 'image.jpg' });
     data.append('upload_preset', 'housing');
     data.append('cloud_name', 'dftomqzrj');
 
@@ -109,9 +105,7 @@ export default function Detail() {
       const response = await fetch('https://api.cloudinary.com/v1_1/dftomqzrj/image/upload', {
         method: 'POST',
         body: data,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       const result = await response.json();
       if (response.ok) {
@@ -129,7 +123,6 @@ export default function Detail() {
     }
   };
 
-  // Chọn và upload nhiều ảnh cùng lúc (tối đa 10 ảnh)
   const pickMultipleImages = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -139,7 +132,7 @@ export default function Detail() {
     });
 
     if (!result.canceled) {
-      const remainingSlots = 10 - images.length; // Số ảnh còn lại có thể thêm
+      const remainingSlots = 10 - images.length;
       if (result.assets.length > remainingSlots) {
         Alert.alert('Giới hạn', `Bạn chỉ có thể chọn thêm ${remainingSlots} ảnh nữa (tối đa 10 ảnh).`);
         return;
@@ -149,15 +142,13 @@ export default function Detail() {
       const uploadPromises = newImageUris.map(uri => uploadImage(uri));
       const uploadedUrls = (await Promise.all(uploadPromises)).filter(url => url !== null);
       if (uploadedUrls.length > 0) {
-        setImages(prevImages => [...prevImages, ...uploadedUrls].slice(0, 10)); // Giới hạn tối đa 10 ảnh
-        console.log('Images state:', images);
+        setImages(prevImages => [...prevImages, ...uploadedUrls].slice(0, 10));
       } else {
         Alert.alert('Lỗi', 'Không có ảnh nào được upload thành công.');
       }
     }
   };
 
-  // Xóa ảnh đã chọn
   const removeImage = (indexToRemove) => {
     setImages(prevImages => prevImages.filter((_, index) => index !== indexToRemove));
   };
@@ -181,9 +172,7 @@ export default function Detail() {
   };
 
   const debouncedFetchAddressSuggestions = useCallback(
-    debounce((query) => {
-      fetchAddressSuggestions(query);
-    }, 500),
+    debounce((query) => fetchAddressSuggestions(query), 500),
     []
   );
 
@@ -194,7 +183,7 @@ export default function Detail() {
 
     try {
       const response = await fetch(url);
-      const data = JSON.parse(await response.text());
+      const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         const { lat, lon } = data[0];
         setSelectedLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
@@ -270,13 +259,13 @@ export default function Detail() {
     fetchAddress(latitude, longitude);
   };
 
-  const handleContinue = async () => {
-    if (!isSignedIn || !user) {
-      Alert.alert('Lỗi', 'Bạn cần đăng nhập để đăng bài.');
+  const handleSave = async () => {
+    if (!isSignedIn || !user || !id) {
+      Alert.alert('Lỗi', 'Bạn cần đăng nhập để chỉnh sửa bài.');
       return;
     }
 
-    const postData = {
+    const updatedData = {
       area,
       bathrooms,
       bedrooms,
@@ -292,25 +281,26 @@ export default function Detail() {
       price,
       title,
       userId: user.id,
-      createdAt: new Date().toISOString(),
-      images, // Lưu danh sách URL ảnh
+      updatedAt: new Date().toISOString(),
+      images,
     };
 
     try {
-      await addDoc(collection(db, 'real_estate_posts'), postData);
-      console.log('Dữ liệu lưu vào Firestore:', postData);
-      Alert.alert('Thành công', 'Bài đăng đã được lưu thành công!');
+      const docRef = doc(db, 'real_estate_posts', id.toString());
+      await updateDoc(docRef, updatedData);
+      console.log('Dữ liệu đã được cập nhật:', updatedData);
+      Alert.alert('Thành công', 'Bài đăng đã được cập nhật!');
       router.back();
     } catch (error) {
-      console.error('Lỗi khi lưu bài đăng:', error);
-      Alert.alert('Lỗi', 'Không thể lưu bài đăng. Vui lòng thử lại.');
+      console.error('Lỗi khi cập nhật bài đăng:', error);
+      Alert.alert('Lỗi', 'Không thể cập nhật bài đăng. Vui lòng thử lại.');
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="p-2 flex-row items-center justify-between px-4">
-        <Text className="text-xl font-bold">Tạo tin đăng</Text>
+        <Text className="text-xl font-bold">Chỉnh sửa tin đăng</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text className="text-[14px] font-medium text-gray-500 border rounded-3xl p-2 px-2">Thoát</Text>
         </TouchableOpacity>
@@ -324,7 +314,6 @@ export default function Detail() {
           className="flex-1 bg-gray-100 p-4"
           keyboardShouldPersistTaps="handled"
         >
-
           <TouchableOpacity
             className="bg-white p-4 rounded-2xl mb-4"
             onPress={() => setShowMapModal(true)}
@@ -352,7 +341,6 @@ export default function Detail() {
             <FlatList
               data={images}
               horizontal
-              // keyExtractor={(item, index) => index.toString()}
               keyExtractor={(item) => item}
               renderItem={({ item, index }) => (
                 <View className="relative">
@@ -383,20 +371,9 @@ export default function Detail() {
                 setValue={setPropertyType}
                 setItems={setItems}
                 placeholder="Chọn loại bất động sản"
-                style={{
-                  borderColor: '#ccc',
-                  borderRadius: 16,
-                  backgroundColor: '#f3f4f6',
-                }}
-                dropDownContainerStyle={{
-                  borderColor: '#ccc',
-                  borderRadius: 16,
-                  backgroundColor: '#fff',
-                  padding: 0,
-                }}
-                textStyle={{
-                  fontSize: 14,
-                }}
+                style={{ borderColor: '#ccc', borderRadius: 16, backgroundColor: '#f3f4f6' }}
+                dropDownContainerStyle={{ borderColor: '#ccc', borderRadius: 16, backgroundColor: '#fff', padding: 0 }}
+                textStyle={{ fontSize: 14 }}
               />
             </View>
             <View>
@@ -424,7 +401,6 @@ export default function Detail() {
                   onChangeText={setPrice}
                 />
               </View>
-
             </View>
           </View>
 
@@ -492,9 +468,7 @@ export default function Detail() {
           <View className="bg-white p-4 rounded-2xl mb-4">
             <View className="flex-row justify-between items-center mb-4">
               <Text className="font-semibold text-base">Tiêu đề & Mô tả</Text>
-
             </View>
-
             <Text className="text-sm font-medium mb-1">Tiêu đề</Text>
             <TextInput
               className="border border-gray-300 bg-white text-sm rounded-xl p-3 mb-1"
@@ -504,7 +478,6 @@ export default function Detail() {
               onChangeText={setTitle}
             />
             <Text className="text-gray-400 text-xs mb-4">Tối thiểu 30 ký tự, tối đa 99 ký tự</Text>
-
             <Text className="text-sm font-medium mb-1">Mô tả</Text>
             <TextInput
               className="border border-gray-300 bg-white text-sm rounded-xl p-3"
@@ -518,8 +491,8 @@ export default function Detail() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      <TouchableOpacity onPress={handleContinue} className="bg-red-600 py-3 rounded-full items-center mx-10 my-5">
-        <Text className="text-white font-semibold text-base">Tiếp tục</Text>
+      <TouchableOpacity onPress={handleSave} className="bg-red-600 py-3 rounded-full items-center mx-10 my-5">
+        <Text className="text-white font-semibold text-base">Lưu thay đổi</Text>
       </TouchableOpacity>
 
       <Modal

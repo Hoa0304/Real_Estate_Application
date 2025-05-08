@@ -10,8 +10,8 @@ type RealEstateItemProps = {
     title: string;
     price: string;
     location: string;
-    images?: string[];  // 👈 dùng `images` (mảng)
-    image?: string;     // 👈 fallback nếu là chuỗi đơn
+    images?: string[];
+    image?: string; 
     contact: {
       phone?: string;
     };
@@ -30,7 +30,6 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
     });
   };
 
-  // ✅ Chọn ảnh ngẫu nhiên từ item.images hoặc dùng fallback
   const getRandomImage = () => {
     const imgs = Array.isArray(item.images)
       ? item.images

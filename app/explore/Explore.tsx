@@ -78,9 +78,9 @@ const HomeScreen = () => {
                     </View>
                     <View className=" flex-1 items-center">
                         <Ionicons name="people-outline" size={24} color="gray" />
-                        <Text className="text-sm mt-1">Liên hệ trong 30 ngày</Text>
-                        <Text className="text-xl font-bold">0 người</Text>
-                        <Text className="text-sm">+0 mới vào hôm nay</Text>
+                        <Text className="text-sm mt-1">Dự đoán giá</Text>
+                        <Text className="text-xl font-bold">0 bài</Text>
+                        <Text className="text-sm">Được lưu</Text>
                     </View>
                 </View>
             </View>
