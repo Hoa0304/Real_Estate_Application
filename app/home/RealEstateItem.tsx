@@ -10,8 +10,11 @@ type RealEstateItemProps = {
     title: string;
     price: string;
     location: string;
-    image: any;
-    contact: string;
+    images?: string[];  // 👈 dùng `images` (mảng)
+    image?: string;     // 👈 fallback nếu là chuỗi đơn
+    contact: {
+      phone?: string;
+    };
   };
   onFavoriteToggle: (item: any) => void;
   isFavorite: boolean;
@@ -26,15 +29,38 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
       params: { id: item.id },
     });
   };
-  
+
+  // ✅ Chọn ảnh ngẫu nhiên từ item.images hoặc dùng fallback
+  const getRandomImage = () => {
+    const imgs = Array.isArray(item.images)
+      ? item.images
+      : item.image
+      ? [item.image]
+      : [];
+
+    if (imgs.length === 0) return null;
+
+    const randomIndex = Math.floor(Math.random() * imgs.length);
+    return imgs[randomIndex];
+  };
+
+  const imageUri = getRandomImage();
+
   return (
     <TouchableOpacity onPress={handlePress}>
       <View className="bg-white rounded-xl shadow p-3 mb-4">
-        <Image
-          source={item.image}
-          className="w-full h-60 rounded-lg mb-2"
-          resizeMode="cover"
-        />
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            className="w-full h-60 rounded-lg mb-2"
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="w-full h-60 rounded-lg mb-2 bg-gray-200 justify-center items-center">
+            <Text className="text-gray-500">Không có ảnh</Text>
+          </View>
+        )}
+
         <Text className="text-base font-semibold" numberOfLines={2}>
           {item.title}
         </Text>
@@ -48,7 +74,9 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
           </View>
           <View className="flex-row items-center">
             <TouchableOpacity className="bg-red-500 px-3 py-1 rounded-xl mr-2">
-              <Text className="text-white font-semibold">{item.contact.phone}</Text>
+              <Text className="text-white font-semibold">
+                {item.contact?.phone || "Liên hệ"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => onFavoriteToggle(item)}>

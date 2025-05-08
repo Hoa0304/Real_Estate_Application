@@ -132,7 +132,7 @@ export default function ChatDetail() {
     };
 
     try {
-      const response = await axios.post("http://192.168.1.169:3001/chat", body);
+      const response = await axios.post("http://127.0.0.1:3001/chat", body);
       return response.data.content;
     } catch (error: any) {
       console.error("Lỗi gọi Flask:", error?.response?.data || error.message);

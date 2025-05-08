@@ -54,6 +54,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "permissions": [
+      {
+        "name": "mediaLibrary",
+        "reason": "To allow users to select pictures from their library"
+      }
+    ]
   }
 }
