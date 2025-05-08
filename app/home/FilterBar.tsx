@@ -3,11 +3,11 @@ import { View } from 'react-native';
 import FilterButton from './FilterButton';
 
 type Props = {
-  isFilterVisible: { type: boolean; price: boolean; area: boolean };
+  isFilterVisible: { category: boolean; price: boolean; area: boolean };
   selectedCategory: string | null;
   selectedPrice: string | null;
   selectedArea: string | null;
-  handleFilterPress: (key: 'type' | 'price' | 'area') => void;
+  handleFilterPress: (key: 'category' | 'price' | 'area') => void;
   handleFilterSelect: (key: string, value: string) => void;
 };
 
@@ -23,10 +23,10 @@ const FilterBar = ({
     <View className="flex-row justify-between gap-2 relative">
       <FilterButton
         title={selectedCategory || 'Loại nhà đất'}
-        onPress={() => handleFilterPress('type')}
-        isVisible={isFilterVisible.type}
+        onPress={() => handleFilterPress('category')}
+        isVisible={isFilterVisible.category}
         options={['Tất cả', 'Nhà phố', 'Căn hộ', 'Biệt thự']}
-        onOptionSelect={(category) => handleFilterSelect('type', category)}
+        onOptionSelect={(category) => handleFilterSelect('category', category)}
       />
       <FilterButton
         title={selectedPrice || 'Mức giá'}

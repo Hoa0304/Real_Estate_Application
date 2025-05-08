@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchBar from '../home/SearchBar';
 import FilterBar from '../home/FilterBar';
@@ -7,7 +7,7 @@ import RealEstateList from '../home/RealEstateList';
 import useFetchRealEstatePosts from '../../hooks/useFetchRealEstatePosts';
 
 type FilterState = {
-  type: boolean;
+  category: boolean;
   price: boolean;
   area: boolean;
 };
@@ -16,17 +16,15 @@ const Home = () => {
   const { posts, loading } = useFetchRealEstatePosts();
 
   const [searchText, setSearchText] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
-  const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>('Loại nhà đất');
+  const [selectedPrice, setSelectedPrice] = useState<string | null>('Tất cả');
+  const [selectedArea, setSelectedArea] = useState<string | null>('Tất cả');
   const [isFilterVisible, setIsFilterVisible] = useState<FilterState>({
-    type: false,
+    category: false,
     price: false,
     area: false,
   });
   const [favorites, setFavorites] = useState<any[]>([]);
-
-  const normalize = (value: string) => value?.toLowerCase().trim();
 
   const handleFavoriteToggle = (item: any) => {
     const exists = favorites.some((fav) => fav.id === item.id);
@@ -42,11 +40,22 @@ const Home = () => {
     }));
   };
 
+  
+
   const handleFilterSelect = (key: string, value: string) => {
-    const selected = value === 'Tất cả' ? null : value;
-    if (key === 'type') setSelectedCategory(selected);
-    if (key === 'price') setSelectedPrice(selected);
-    if (key === 'area') setSelectedArea(selected);
+    // If "Tất cả" is selected, reset the filter to the default option
+    if (value === 'Tất cả') {
+      if (key === 'category') setSelectedCategory('Loại nhà đất');
+      if (key === 'price') setSelectedPrice('Mức giá');
+      if (key === 'area') setSelectedArea('Diện tích');
+    } else {
+      // Otherwise, just update the filter with the selected value
+      if (key === 'category') setSelectedCategory(value);
+      if (key === 'price') setSelectedPrice(value);
+      if (key === 'area') setSelectedArea(value);
+    }
+  
+    // Hide the filter dropdown after selection
     setIsFilterVisible((prev) => ({ ...prev, [key]: false }));
   };
 
@@ -62,26 +71,31 @@ const Home = () => {
   };
 
   const filteredData = posts.filter((item) => {
-    const matchCategory = selectedCategory
-      ? normalize(item.category) === normalize(selectedCategory)
-      : true;
+    const matchCategory =
+      !selectedCategory || selectedCategory === 'Loại nhà đất' || selectedCategory === 'Tất cả' || item.category === selectedCategory;
 
+    const numericPrice = extractPriceValue(item.price || '');
     const matchPrice =
-      selectedPrice === 'Dưới 2 tỷ'
-        ? extractPriceValue(item.price) < 2
+      !selectedPrice || selectedPrice === 'Tất cả'
+        ? true
+        : selectedPrice === 'Dưới 2 tỷ'
+        ? numericPrice < 2
         : selectedPrice === '2-10 tỷ'
-        ? extractPriceValue(item.price) >= 2 && extractPriceValue(item.price) <= 10
+        ? numericPrice >= 2 && numericPrice <= 10
         : selectedPrice === 'Trên 10 tỷ'
-        ? extractPriceValue(item.price) > 10
+        ? numericPrice > 10
         : true;
 
+    const numericArea = extractAreaValue(item.area || '');
     const matchArea =
-      selectedArea === 'Dưới 50 m²'
-        ? extractAreaValue(item.area) < 50
+      !selectedArea || selectedArea === 'Tất cả'
+        ? true
+        : selectedArea === 'Dưới 50 m²'
+        ? numericArea < 50
         : selectedArea === '50-100 m²'
-        ? extractAreaValue(item.area) >= 50 && extractAreaValue(item.area) <= 100
+        ? numericArea >= 50 && numericArea <= 100
         : selectedArea === 'Trên 100 m²'
-        ? extractAreaValue(item.area) > 100
+        ? numericArea > 100
         : true;
 
     const matchSearch = item.title?.toLowerCase().includes(searchText.toLowerCase());
@@ -93,6 +107,14 @@ const Home = () => {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#000" />
+      </SafeAreaView>
+    );
+  }
+
+  if (filteredData.length === 0) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-white">
+        <Text>No properties match your filters!</Text>
       </SafeAreaView>
     );
   }
@@ -112,9 +134,9 @@ const Home = () => {
       </View>
 
       <RealEstateList
-        data={filteredData}
-        favorites={favorites}
-        onFavoriteToggle={handleFavoriteToggle}
+      data={filteredData}
+      favorites={favorites}
+      onFavoriteToggle={handleFavoriteToggle}
       />
     </SafeAreaView>
   );

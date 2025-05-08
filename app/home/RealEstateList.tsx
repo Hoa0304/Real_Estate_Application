@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, Text } from 'react-native';
-import RealEstateItem from './RealEstateItem';
+import RealEstateItemV2 from './RealEstateItemV2';
 
 type Props = {
   data: any[];
@@ -14,7 +14,7 @@ const RealEstateList = ({ data, favorites, onFavoriteToggle }: Props) => {
       data={data}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <RealEstateItem
+        <RealEstateItemV2
           item={item}
           onFavoriteToggle={onFavoriteToggle}
           isFavorite={favorites.some((fav) => fav.id === item.id)}

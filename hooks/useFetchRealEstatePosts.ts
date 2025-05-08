@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const useFetchRealEstatePosts = () => {
@@ -7,21 +7,22 @@ const useFetchRealEstatePosts = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'real_estate_posts'), orderBy('createdAt', 'desc'));
+    const fetchPosts = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'real_estate_posts'));
+        const data = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPosts(data);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPosts(data);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching posts in real-time:', error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    fetchPosts();
   }, []);
 
   return { posts, loading };

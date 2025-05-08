@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
-import { AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import images from '@/constants/images';
 
@@ -22,7 +21,7 @@ type RealEstateItemProps = {
   isFavorite: boolean;
 };
 
-const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemProps) => {
+const RealEstateItemV2 = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemProps) => {
   const router = useRouter();
 
   const handlePress = () => {
@@ -79,14 +78,6 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
                 {item.contact?.phone || "Liên hệ"}
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => onFavoriteToggle(item)}>
-              <AntDesign
-                name={isFavorite ? 'heart' : 'hearto'}
-                size={24}
-                color={isFavorite ? 'red' : 'gray'}
-              />
-            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -94,4 +85,4 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
   );
 };
 
-export default RealEstateItem;
+export default RealEstateItemV2;
