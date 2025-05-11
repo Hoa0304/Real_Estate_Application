@@ -182,32 +182,32 @@ export default function Detail() {
     []
   );
 
-  const geocodeAddress = async (selectedAddress) => {
-    const apiKey = 'pk.1f712969e89f02344e338bfa6ed76ff7';
-    const addressToGeocode = selectedAddress.display_name || inputAddress;
-    const url = `https://api.locationiq.com/v1/geocode?key=${apiKey}&q=${encodeURIComponent(addressToGeocode)}&format=json&countrycodes=vn&accept-language=vi`;
+  // const geocodeAddress = async (selectedAddress) => {
+  //   const apiKey = 'pk.1f712969e89f02344e338bfa6ed76ff7';
+  //   const addressToGeocode = selectedAddress.display_name || inputAddress;
+  //   const url = `https://api.locationiq.com/v1/geocode?key=${apiKey}&q=${encodeURIComponent(addressToGeocode)}&format=json&countrycodes=vn&accept-language=vi`;
 
-    try {
-      const response = await fetch(url);
-      const data = JSON.parse(await response.text());
-      if (Array.isArray(data) && data.length > 0) {
-        const { lat, lon } = data[0];
-        setSelectedLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
-        setRegion({
-          latitude: parseFloat(lat),
-          longitude: parseFloat(lon),
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-        setInputAddress(data[0].display_name);
-      } else {
-        Alert.alert('Lỗi', 'Không tìm thấy địa chỉ.');
-      }
-    } catch (error) {
-      console.error('Lỗi khi chuyển địa chỉ:', error);
-      Alert.alert('Lỗi', 'Không thể tìm địa chỉ.');
-    }
-  };
+  //   try {
+  //     const response = await fetch(url);
+  //     const data = JSON.parse(await response.text());
+  //     if (Array.isArray(data) && data.length > 0) {
+  //       const { lat, lon } = data[0];
+  //       setSelectedLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
+  //       setRegion({
+  //         latitude: parseFloat(lat),
+  //         longitude: parseFloat(lon),
+  //         latitudeDelta: 0.0922,
+  //         longitudeDelta: 0.0421,
+  //       });
+  //       setInputAddress(data[0].display_name);
+  //     } else {
+  //       Alert.alert('Lỗi', 'Không tìm thấy địa chỉ.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Lỗi khi chuyển địa chỉ:', error);
+  //     Alert.alert('Lỗi', 'Không thể tìm địa chỉ.');
+  //   }
+  // };
 
   const fetchAddress = async (latitude, longitude) => {
     const apiKey = 'pk.1f712969e89f02344e338bfa6ed76ff7';
@@ -374,6 +374,8 @@ export default function Detail() {
             <TextInput
               className="border border-gray-300 bg-gray-200  rounded-3xl px-4 py-2 mt-1 mb-3"
               placeholder="Loại BĐS"
+              value={propertyType}
+  onChangeText={setPropertyType}
             />
           </View>
             </View>

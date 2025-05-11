@@ -10,6 +10,7 @@ import {
   Modal,
   TouchableOpacity,
   Alert,
+  Linking,
 } from "react-native";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -37,9 +38,11 @@ const RealEstateDetail = () => {
   useEffect(() => {
     const selectedItem = posts.find((post) => post.id === id);
     setItem(selectedItem);
+  }, [posts, id]);
 
+  useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (!userId || !isLoaded) return;
+      if (!userId || !isLoaded || !id) return;
       try {
         const favorites = await fetchFavoritesFromFirebase();
         const isFav = favorites.some((fav) => fav.id === id);
@@ -50,19 +53,15 @@ const RealEstateDetail = () => {
       }
     };
 
-    if (id) {
-      checkFavoriteStatus();
-    }
-  }, [id, posts, userId, isLoaded]);
+    checkFavoriteStatus();
+  }, [userId, isLoaded, id]);
 
   const handleBackPress = () => {
     router.back();
   };
 
   const handleFavoriteToggle = async () => {
-    if (!item) return;
-
-    if (!isLoaded || !userId) {
+    if (!item || !userId || !isLoaded) {
       alert("Bạn cần đăng nhập để lưu yêu thích");
       return;
     }
@@ -128,6 +127,11 @@ const RealEstateDetail = () => {
     );
   };
 
+  const handleCall = (phoneNumber: string) => {
+    if (!phoneNumber) return;
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -138,8 +142,16 @@ const RealEstateDetail = () => {
 
   if (!item) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Không có dữ liệu chi tiết</Text>
+      <View className="flex-1 justify-center items-center px-4">
+        <Text className="text-center text-lg font-semibold text-gray-600">
+          Bài đăng không còn tồn tại hoặc đã bị xóa.
+        </Text>
+        <Pressable
+          onPress={handleBackPress}
+          className="mt-4 bg-red-600 px-6 py-2 rounded-full"
+        >
+          <Text className="text-white font-semibold">Quay lại</Text>
+        </Pressable>
       </View>
     );
   }
@@ -156,6 +168,7 @@ const RealEstateDetail = () => {
     <SafeAreaView className="flex-1 bg-white">
       <TouchableWithoutFeedback>
         <ScrollView className="bg-white">
+          {/* Image Scroll */}
           <View className="relative">
             <ScrollView
               horizontal
@@ -169,9 +182,7 @@ const RealEstateDetail = () => {
                 <Image
                   key={index}
                   source={{ uri }}
-                  className="w-[${
-                    SCREEN_WIDTH
-                  }px] h-64"
+                  className="w-full h-64"
                   style={{ width: SCREEN_WIDTH }}
                   resizeMode="cover"
                 />
@@ -216,6 +227,7 @@ const RealEstateDetail = () => {
             </View>
           </View>
 
+          {/* Thông tin bất động sản */}
           <View className="px-4 py-2 border-b border-gray-200">
             <Text className="text-red-600 text-xl font-semibold">
               {item.price}
@@ -241,19 +253,33 @@ const RealEstateDetail = () => {
             <Text className="font-semibold text-base">
               Đặc điểm bất động sản
             </Text>
-            {[
-              ["Diện tích", item.area || "N/A"],
-              ["Mức giá", item.price || "N/A"],
-            ].map(([label, value], index) => (
-              <View key={index} className="flex-row justify-between">
-                <Text className="text-gray-600">{label}:</Text>
-                <Text className="font-medium">{value}</Text>
-              </View>
-            ))}
+            {[["Loại nhà", item.category || "N/A"], ["Diện tích", item.area || "N/A"], ["Mức giá", item.price || "N/A"]].map(
+              ([label, value], index) => (
+                <View key={index} className="flex-row justify-between">
+                  <Text className="text-gray-600">{label}:</Text>
+                  <Text className="font-medium">{value}</Text>
+                </View>
+              )
+            )}
+          </View>
+
+          <View className="px-4 py-2 space-y-2 border-t border-gray-200">
+            <Text className="font-semibold text-base">Thông tin liên hệ:</Text>
+            {[["Tên", item.contact.name || "N/A"], ["Email", item.contact.email || "N/A"]].map(
+              ([label, value], index) => (
+                <View key={index} className="flex-row justify-between">
+                  <Text className="text-gray-600">{label}:</Text>
+                  <Text className="font-medium">{value}</Text>
+                </View>
+              )
+            )}
           </View>
 
           <View className="px-4 py-4">
-            <Pressable className="bg-red-600 rounded-full py-3 flex-row items-center justify-center">
+            <Pressable
+              onPress={() => handleCall(item.contact?.phone)}
+              className="bg-red-600 rounded-full py-3 flex-row items-center justify-center"
+            >
               <Ionicons name="call-outline" size={20} color="#fff" />
               <Text className="text-white ml-2 font-semibold text-base">
                 {item.contact?.phone || "Liên hệ"}
@@ -263,6 +289,7 @@ const RealEstateDetail = () => {
         </ScrollView>
       </TouchableWithoutFeedback>
 
+      {/* Modal menu sửa/xoá */}
       <Modal
         visible={menuVisible}
         transparent={true}
@@ -280,10 +307,7 @@ const RealEstateDetail = () => {
             >
               <Text className="text-base">Sửa bài đăng</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              className="py-3"
-              onPress={handleDeletePost}
-            >
+            <TouchableOpacity className="py-3" onPress={handleDeletePost}>
               <Text className="text-base text-red-600">Xóa bài đăng</Text>
             </TouchableOpacity>
           </View>

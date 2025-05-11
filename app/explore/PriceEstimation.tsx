@@ -66,7 +66,7 @@ const PriceEstimation = () => {
 
         try {
             setLoading(true);
-            const response = await fetch('http://192.168.1.174:8000/predict', {
+            const response = await fetch('http://172.20.10.3:8000/predict', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -76,6 +76,7 @@ const PriceEstimation = () => {
                     floors,
                     category,
                     location,
+                    phone: '+84789469867',
                 }),
                 signal: controller.signal,
             });

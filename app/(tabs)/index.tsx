@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchBar from '../home/SearchBar';
 import FilterBar from '../home/FilterBar';
 import RealEstateList from '../home/RealEstateList';
-import useFetchRealEstatePosts from '../../hooks/useFetchRealEstatePosts';
+import useFetchRealEstatePosts from '@/hooks/useFetchRealEstatePosts';
 
 type FilterState = {
   category: boolean;
@@ -17,8 +17,8 @@ const Home = () => {
 
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>('Loại nhà đất');
-  const [selectedPrice, setSelectedPrice] = useState<string | null>('Tất cả');
-  const [selectedArea, setSelectedArea] = useState<string | null>('Tất cả');
+  const [selectedPrice, setSelectedPrice] = useState<string | null>('Mức giá');
+  const [selectedArea, setSelectedArea] = useState<string | null>('Diện tích');
   const [isFilterVisible, setIsFilterVisible] = useState<FilterState>({
     category: false,
     price: false,
@@ -43,19 +43,16 @@ const Home = () => {
   
 
   const handleFilterSelect = (key: string, value: string) => {
-    // If "Tất cả" is selected, reset the filter to the default option
     if (value === 'Tất cả') {
       if (key === 'category') setSelectedCategory('Loại nhà đất');
       if (key === 'price') setSelectedPrice('Mức giá');
       if (key === 'area') setSelectedArea('Diện tích');
     } else {
-      // Otherwise, just update the filter with the selected value
       if (key === 'category') setSelectedCategory(value);
       if (key === 'price') setSelectedPrice(value);
       if (key === 'area') setSelectedArea(value);
     }
   
-    // Hide the filter dropdown after selection
     setIsFilterVisible((prev) => ({ ...prev, [key]: false }));
   };
 

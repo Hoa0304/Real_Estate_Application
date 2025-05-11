@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import images from '@/constants/images';
@@ -11,14 +17,17 @@ type RealEstateItemProps = {
     price: string;
     location: string;
     images?: string[];
-    image?: string; 
+    image?: string;
     contact: {
       phone?: string;
       name: string;
     };
-    isFavorite?: boolean; 
+    isFavorite?: boolean;
+    bedrooms?: number;
+    bathrooms?: number;
+    floors?: number;
   };
-  onFavoriteToggle: (item: any) => void; 
+  onFavoriteToggle: (item: any) => void;
   isFavorite: boolean;
 };
 
@@ -30,6 +39,12 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
       pathname: '/home/[id]',
       params: { id: item.id },
     });
+  };
+
+  const handleCall = (phoneNumber?: string) => {
+    if (phoneNumber) {
+      Linking.openURL(`tel:${phoneNumber}`);
+    }
   };
 
   const getRandomImage = () => {
@@ -65,6 +80,9 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
         <Text className="text-base font-semibold" numberOfLines={2}>
           {item.title}
         </Text>
+        <Text className="text-gray-700">
+          {item.bedrooms} PN • {item.bathrooms} WC • {item.floors} tầng
+        </Text>
         <Text className="text-red-600 font-bold mt-1">{item.price}</Text>
         <Text className="text-gray-500">{item.location}</Text>
 
@@ -74,7 +92,10 @@ const RealEstateItem = ({ item, onFavoriteToggle, isFavorite }: RealEstateItemPr
             <Text className="text-sm text-gray-600">{item.contact.name}</Text>
           </View>
           <View className="flex-row items-center">
-            <TouchableOpacity className="bg-red-500 px-3 py-1 rounded-xl mr-2">
+            <TouchableOpacity
+              className="bg-red-500 px-3 py-1 rounded-xl mr-2"
+              onPress={() => handleCall(item.contact?.phone)}
+            >
               <Text className="text-white font-semibold">
                 {item.contact?.phone || "Liên hệ"}
               </Text>

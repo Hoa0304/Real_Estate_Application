@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, SafeAreaView } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
-import useFetchFavorites from '@/hooks/fetchFavoritesFromFirebase'; // Hook to fetch favorites
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/firebaseConfig'; 
+import useFetchFavorites from '@/hooks/fetchFavoritesFromFirebase';
 import RealEstateItem from '../home/RealEstateItem';
 
 const Favorite = () => {
@@ -12,11 +14,18 @@ const Favorite = () => {
 
   const [favoriteItems, setFavoriteItems] = useState(favorites);
 
-  const handleFavoriteToggle = (item: any) => {
-    const updatedFavorites = favoriteItems.map((fav) =>
-      fav.id === item.id ? { ...fav, isFavorite: !fav.isFavorite } : fav
-    );
-    setFavoriteItems(updatedFavorites);
+  const handleFavoriteToggle = async (item: any) => {
+    if (item.isFavorite && userId) {
+      try {
+        await deleteDoc(doc(db, 'user', userId, 'favorites', item.id));
+
+        setFavoriteItems((prevItems) =>
+          prevItems.filter((fav) => fav.id !== item.id)
+        );
+      } catch (error) {
+        console.error('Lỗi khi xóa khỏi yêu thích:', error);
+      }
+    }
   };
 
   useEffect(() => {
@@ -61,11 +70,11 @@ const Favorite = () => {
           paddingBottom: 24,
           paddingTop: 14,
         }}
-         ListEmptyComponent={
-                <Text className="text-center text-gray-500 mt-10">
-                  Không có kết quả phù hợp
-                </Text>
-              }
+        ListEmptyComponent={
+          <Text className="text-center text-gray-500 mt-10">
+            Không có kết quả phù hợp
+          </Text>
+        }
       />
     </SafeAreaView>
   );

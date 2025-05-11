@@ -96,7 +96,7 @@ const HomeScreen = () => {
                     </Text>
 
                     <TouchableOpacity className="bg-red-600 rounded-full px-6 py-2" onPress={handlePost}>
-                        <Text className="text-white font-semibold">+ Tạo tin đăng đầu tiên</Text>
+                        <Text className="text-white font-semibold">+ Tạo tin đăng</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity className="bg-blue-600 rounded-full px-6 py-2 mt-2" onPress={handlePredictPrice}>
