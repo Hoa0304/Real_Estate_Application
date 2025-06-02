@@ -4,7 +4,6 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { useSSO, useUser } from '@clerk/clerk-expo';
 import { Redirect, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import images from "@/constants/images"
 import { SafeAreaView } from 'react-native-safe-area-context';
 export const useWarmUpBrowser = () => {

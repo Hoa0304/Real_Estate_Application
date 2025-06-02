@@ -52,23 +52,30 @@ export default function ChatDetail() {
       orderBy("createdAt", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const messagesList: Message[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        messagesList.push({
-          id: doc.id,
-          fromMe: data.fromMe,
-          text: data.text,
-          time: data.time?.toDate?.().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }) ?? "",
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const messagesList: Message[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          messagesList.push({
+            id: doc.id,
+            fromMe: data.fromMe,
+            text: data.text,
+            time: data.time?.toDate?.().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }) ?? "",
+          });
         });
-      });
-      setMessages(messagesList);
-    });
+        setMessages(messagesList);
+      },
+      (error) => {
+        console.error("Firestore snapshot error:", error);
+        Alert.alert("Lỗi", "Không thể tải tin nhắn từ Firestore.");
+      }
+    );
 
     return () => unsubscribe();
   }, [userId, isLoaded]);
@@ -88,7 +95,7 @@ export default function ChatDetail() {
     });
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random()}`, // Improved ID to avoid collisions
       fromMe: true,
       text: inputText,
       time: formattedTime,
@@ -100,6 +107,7 @@ export default function ChatDetail() {
     setLoading(true);
 
     try {
+      // Save user message to Firestore
       await addDoc(collection(db, `user/${userId}/chats`), {
         fromMe: true,
         text: currentInput,
@@ -107,9 +115,24 @@ export default function ChatDetail() {
         createdAt: currentTime,
       });
 
+      // Get AI response
       const replyText = await getAIResponse(currentInput);
       const botTime = new Date();
+      const botMessage: Message = {
+        id: `${Date.now()}-${Math.random()}`,
+        fromMe: false,
+        text: replyText,
+        time: botTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+      };
 
+      // Add bot message to UI immediately
+      setMessages((prev) => [...prev, botMessage]);
+
+      // Save bot message to Firestore
       await addDoc(collection(db, `user/${userId}/chats`), {
         fromMe: false,
         text: replyText,
@@ -117,8 +140,26 @@ export default function ChatDetail() {
         createdAt: botTime,
       });
     } catch (error: any) {
-      console.log("Lỗi:", error?.response?.data || error.message);
-      Alert.alert("Lỗi", "Không thể kết nối đến server.");
+      console.error("Lỗi gửi tin nhắn:", {
+        message: error.message,
+        code: error.code,
+        response: error?.response?.data,
+        status: error?.response?.status,
+      });
+      const errorMessage = error?.response?.data?.detail || error.message || "Không thể kết nối đến server.";
+      const botTime = new Date();
+      const errorBotMessage: Message = {
+        id: `${Date.now()}-${Math.random()}`,
+        fromMe: false,
+        text: `Lỗi: ${errorMessage}`,
+        time: botTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+      };
+      setMessages((prev) => [...prev, errorBotMessage]);
+      Alert.alert("Lỗi", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -128,12 +169,18 @@ export default function ChatDetail() {
     const body = {
       messages: [{ role: "user", content: userInput }],
     };
-
     try {
+      console.log("Gửi yêu cầu đến /chat:", JSON.stringify(body, null, 2));
       const response = await axios.post("http://172.20.10.3:8000/chat", body, { timeout: 15000 });
-      return response.data.content;
+      console.log("Phản hồi từ /chat:", response.data);
+      return response.data.response;
     } catch (error: any) {
-      console.error("Lỗi gọi Flask:", error?.response?.data || error.message);
+      console.error("Lỗi gọi API:", {
+        message: error.message,
+        code: error.code,
+        response: error?.response?.data,
+        status: error?.response?.status,
+      });
       throw error;
     }
   };
